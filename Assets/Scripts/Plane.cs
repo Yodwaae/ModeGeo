@@ -3,39 +3,44 @@ using System.Linq;
 using UnityEngine;
 using static UnityEditor.Searcher.SearcherWindow.Alignment;
 
+public enum Shape
+{
+    Plane,
+    Cylinder
+}
+
 public class NewMonoBehaviourScript : MonoBehaviour
 {
+    [Header("Shape")]
+    public Shape shape = Shape.Plane;
 
-    // TODO I really need to find how to add triangles both way without creating lighting problems
-
-    [Header("Custom Shape")]
-    public int height, width, nbCol, nbLine;
+    [Header("Plane")]
+    public int height;
+    public int width;
+    public int nbCol;
+    public int nbLine;
 
 
     [Header("Cylinder")]
-    public int faceCount, cylinderHeight;
+    public int faceCount;
+    public int cylinderHeight;
     public float radius;
 
-
-    public bool isCylinder = false; //TODO Use an enum later
     List<Vector3> vertices = new List<Vector3>();
     List<int> triangles = new List<int>();
 
 
     void OnDrawGizmos()
     {
-        if (isCylinder)
+        if (shape == Shape.Cylinder)
         {
             DrawCylinder();
         }
-        else
+        else if (shape == Shape.Plane)
         {
-            DrawCustomMesh();
+            DrawPlane(); 
         }
-
         RenderMesh();
-        vertices.Clear();
-        triangles.Clear();
     }
 
     private void RenderMesh()
@@ -47,9 +52,15 @@ public class NewMonoBehaviourScript : MonoBehaviour
         // Create the new mesh
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
-        mesh.RecalculateNormals();
+        //mesh.RecalculateNormals(); // TODO Deactivated normals recomputation so I I can easily have both way facing triangle (cause a light bug if activated because unity thinks the 2 opposite triangle have thr same normal)
         mesh.RecalculateBounds();
+
+        // Empty the List after creating the mesh
+        vertices.Clear();
+        triangles.Clear();
     }
+
+    // TODO Improve the draw function by placing the vertices first (avoiding duplication) then loop and create the triangles
 
     private void DrawCylinder()
     {
@@ -58,13 +69,12 @@ public class NewMonoBehaviourScript : MonoBehaviour
         float yTopCoord = cylinderHeight / 2;
         int bottomVertexIndex = 0;
         int topVertexIndex = 1;
+        float angleStep = (2 * Mathf.PI) / faceCount;
 
         // Adding centered top and bottom vertex
         vertices.Add(new Vector3(0, -cylinderHeight/2, 0));
         vertices.Add(new Vector3(0, cylinderHeight/2, 0));
 
-        float angleStep = (2 * Mathf.PI) / faceCount;
-        // Some vertices are added 2 times but the ToArray() later get rid of the duplicates (TODO IMPROVE)
         for (int i = 0; i < faceCount; i++)
         {
             // Loop initialisation
@@ -88,54 +98,91 @@ public class NewMonoBehaviourScript : MonoBehaviour
             vertices.Add(new Vector3(xCoord, yTopCoord, zCoord));
             vertices.Add(new Vector3(xPrimeCoord, yTopCoord, zPrimeCoord));
 
-            // First triangle clock wise
+            // === Face first triangle ===
+            // Clock- wise
             triangles.Add(vertexIndex + 2);
             triangles.Add(vertexIndex + 1);
             triangles.Add(vertexIndex);
+            // Counter clock-wise
+            triangles.Add(vertexIndex);
+            triangles.Add(vertexIndex + 1);
+            triangles.Add(vertexIndex + 2);
 
-            // Second triangle clock wise
+            // === Face second triangle ===
+            // Clock-wise
             triangles.Add(vertexIndex + 2);
             triangles.Add(vertexIndex + 3);
             triangles.Add(vertexIndex + 1);
+            // Counter clock-wise
+            triangles.Add(vertexIndex + 1);
+            triangles.Add(vertexIndex + 3);
+            triangles.Add(vertexIndex + 2);
 
-            // Bottom triangle
+            // === Bottom face triangle ===
+            // Clock-wise
             triangles.Add(bottomVertexIndex);
             triangles.Add(vertexIndex);
             triangles.Add(vertexIndex + 1);
+            // Counter clock-wise
+            triangles.Add(vertexIndex + 1);
+            triangles.Add(vertexIndex);
+            triangles.Add(bottomVertexIndex);
 
-            // Top triangle
+            // === Top face triangle ===
+            // Clock-wise
             triangles.Add(vertexIndex + 3);
             triangles.Add(vertexIndex + 2);
             triangles.Add(topVertexIndex);
-
+            // Counter clock-wise
+            triangles.Add(topVertexIndex);
+            triangles.Add(vertexIndex + 2);
+            triangles.Add(vertexIndex + 3);
         }
     }
 
-    private void DrawCustomMesh()
+    private void DrawPlane()
     {
 
-        // Some vertices are added 2 times but the ToArray() later get rid of the duplicates (TODO IMPROVE)
         for (int x = 0; x < nbCol; x++)
         {
             for (int y = 0; y < nbLine; y++)
             {
+                // Loop Initialisation
                 int vertexIndex = vertices.Count;
 
-                // Quad vertices
-                vertices.Add(new Vector3(x * width, y * height, 0));
-                vertices.Add(new Vector3((x + 1) * width, y * height, 0));
-                vertices.Add(new Vector3(x * width, (y + 1) * height, 0));
-                vertices.Add(new Vector3((x + 1) * width, (y + 1) * height, 0));
+                // Coord computation
+                // X
+                float xCoord = x * width;
+                float xPrimeCoord = (x + 1) * width;
+                // Y
+                float yCoord = y * height;
+                float yPrimeCoord = (y + 1) * height;
 
-                // First triangle clock wise
+                // Quad vertices
+                vertices.Add(new Vector3(xCoord, yCoord, 0));
+                vertices.Add(new Vector3(xPrimeCoord, yCoord, 0));
+                vertices.Add(new Vector3(xCoord, yPrimeCoord, 0));
+                vertices.Add(new Vector3(xPrimeCoord, yPrimeCoord, 0));
+
+                // === First triangle ===
+                // Clock-wise
                 triangles.Add(vertexIndex);
                 triangles.Add(vertexIndex + 1);
                 triangles.Add(vertexIndex + 2);
+                // Counter clock-wise
+                triangles.Add(vertexIndex + 2);
+                triangles.Add(vertexIndex + 1);
+                triangles.Add(vertexIndex);
 
-                // Second triangle clock wise
+                // === Second triangle ===
+                // Clock wise
                 triangles.Add(vertexIndex + 1);
                 triangles.Add(vertexIndex + 3);
                 triangles.Add(vertexIndex + 2);
+                // Counter clock-wise
+                triangles.Add(vertexIndex + 2);
+                triangles.Add(vertexIndex + 3);
+                triangles.Add(vertexIndex + 1);
             }
         }
     }
