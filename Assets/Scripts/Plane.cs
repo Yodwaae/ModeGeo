@@ -43,6 +43,18 @@ public class NewMonoBehaviourScript : MonoBehaviour
         RenderMesh();
     }
 
+    private void AddTriangles(int index1, int index2, int index3)
+    {
+        // Clock-wise
+        triangles.Add(index1);
+        triangles.Add(index2);
+        triangles.Add(index3);
+        // Counter clock-wise
+        triangles.Add(index3);
+        triangles.Add(index2);
+        triangles.Add(index1);
+    }
+
     private void RenderMesh()
     {
         // Get the mesh and clear it
@@ -60,8 +72,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
         triangles.Clear();
     }
 
-    // TODO Improve the draw function by placing the vertices first (avoiding duplication) then loop and create the triangles
-
+    // TODO Improve the draw functions by placing the vertices first (avoiding duplication) then loop and create the triangles
     private void DrawCylinder()
     {
         // Initialisation
@@ -98,45 +109,14 @@ public class NewMonoBehaviourScript : MonoBehaviour
             vertices.Add(new Vector3(xCoord, yTopCoord, zCoord));
             vertices.Add(new Vector3(xPrimeCoord, yTopCoord, zPrimeCoord));
 
-            // === Face first triangle ===
-            // Clock- wise
-            triangles.Add(vertexIndex + 2);
-            triangles.Add(vertexIndex + 1);
-            triangles.Add(vertexIndex);
-            // Counter clock-wise
-            triangles.Add(vertexIndex);
-            triangles.Add(vertexIndex + 1);
-            triangles.Add(vertexIndex + 2);
-
-            // === Face second triangle ===
-            // Clock-wise
-            triangles.Add(vertexIndex + 2);
-            triangles.Add(vertexIndex + 3);
-            triangles.Add(vertexIndex + 1);
-            // Counter clock-wise
-            triangles.Add(vertexIndex + 1);
-            triangles.Add(vertexIndex + 3);
-            triangles.Add(vertexIndex + 2);
-
-            // === Bottom face triangle ===
-            // Clock-wise
-            triangles.Add(bottomVertexIndex);
-            triangles.Add(vertexIndex);
-            triangles.Add(vertexIndex + 1);
-            // Counter clock-wise
-            triangles.Add(vertexIndex + 1);
-            triangles.Add(vertexIndex);
-            triangles.Add(bottomVertexIndex);
-
-            // === Top face triangle ===
-            // Clock-wise
-            triangles.Add(vertexIndex + 3);
-            triangles.Add(vertexIndex + 2);
-            triangles.Add(topVertexIndex);
-            // Counter clock-wise
-            triangles.Add(topVertexIndex);
-            triangles.Add(vertexIndex + 2);
-            triangles.Add(vertexIndex + 3);
+            // Face first triangle
+            AddTriangles(vertexIndex + 2, vertexIndex + 1, vertexIndex);
+            // Face second triangle
+            AddTriangles(vertexIndex + 2, vertexIndex + 3, vertexIndex + 1);
+            // Bottom face triangle
+            AddTriangles(bottomVertexIndex, vertexIndex, vertexIndex + 1);
+            // Top face triangle
+            AddTriangles(vertexIndex + 3, vertexIndex + 2, topVertexIndex);
         }
     }
 
@@ -164,25 +144,10 @@ public class NewMonoBehaviourScript : MonoBehaviour
                 vertices.Add(new Vector3(xCoord, yPrimeCoord, 0));
                 vertices.Add(new Vector3(xPrimeCoord, yPrimeCoord, 0));
 
-                // === First triangle ===
-                // Clock-wise
-                triangles.Add(vertexIndex);
-                triangles.Add(vertexIndex + 1);
-                triangles.Add(vertexIndex + 2);
-                // Counter clock-wise
-                triangles.Add(vertexIndex + 2);
-                triangles.Add(vertexIndex + 1);
-                triangles.Add(vertexIndex);
-
-                // === Second triangle ===
-                // Clock wise
-                triangles.Add(vertexIndex + 1);
-                triangles.Add(vertexIndex + 3);
-                triangles.Add(vertexIndex + 2);
-                // Counter clock-wise
-                triangles.Add(vertexIndex + 2);
-                triangles.Add(vertexIndex + 3);
-                triangles.Add(vertexIndex + 1);
+                // First triangle
+                AddTriangles(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                // Second triangle
+                AddTriangles(vertexIndex + 1, vertexIndex + 3, vertexIndex + 2);
             }
         }
     }
