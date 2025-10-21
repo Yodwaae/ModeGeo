@@ -30,10 +30,11 @@ public class NewMonoBehaviourScript : MonoBehaviour
     public int coneFaceCount;
     public int coneHeight;
     public float coneRadius;
+    [Range(0f, 1f)]public float coneTruncateHeight;
+    [Range(0f, 1f)]public float coneTruncateRadius;
 
     List<Vector3> vertices = new List<Vector3>();
     List<int> triangles = new List<int>();
-
 
     void OnDrawGizmos()
     {
@@ -69,8 +70,24 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
     private void RenderMesh()
     {
-        // Get the mesh and clear it
-        Mesh mesh = GetComponent<MeshFilter>().mesh;
+        var meshFilter = GetComponent<MeshFilter>();
+        if (meshFilter == null)
+            return;
+
+        #if UNITY_EDITOR
+            // In editor mode use shared mesh to avoid memory leakage
+            Mesh mesh = meshFilter.sharedMesh;
+            if (mesh == null)
+            {
+                mesh = new Mesh();
+                meshFilter.sharedMesh = mesh;
+            }
+        #else
+            // In play mode use the mesh (singleton)
+            Mesh mesh = meshFilter.mesh;
+        #endif
+
+        // Clear the mesh
         mesh.Clear();
 
         // Create the new mesh
@@ -178,7 +195,8 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
         // Adding centered top and bottom vertex
         vertices.Add(new Vector3(0, -coneHeight / 2, 0)); // BOTTOM
-        vertices.Add(new Vector3(0, coneHeight / 2, 0)); // TOP
+        vertices.Add(new Vector3(0, coneHeight / 2 * coneTruncateHeight, 0)); // TOP
+
 
         for (int i = 0; i < coneFaceCount; i++)
         {
@@ -199,11 +217,9 @@ public class NewMonoBehaviourScript : MonoBehaviour
             vertices.Add(new Vector3(xCoord, yBottomCoord, zCoord));
             vertices.Add(new Vector3(xPrimeCoord, yBottomCoord, zPrimeCoord));
             
-            // TODO Found the quick trick to create truncated cone, instead of hardcoding 0 as the x and z coords
-            // I compute them as usual then I multiply them by factor to reduce the size of the top section (if I wanto have something consistant I should multiply the ycoord by the same factor)
-            // Top vertices
-            vertices.Add(new Vector3(xCoord * 0, yTopCoord, zCoord * 0));
-            vertices.Add(new Vector3(xPrimeCoord *0, yTopCoord, zPrimeCoord * 0));
+            // Top vertices // TODO Do I create an helper function for vector3 member by member multiplication ?
+            vertices.Add(new Vector3(xCoord * coneTruncateRadius, yTopCoord * coneTruncateHeight, zCoord * coneTruncateRadius));
+            vertices.Add(new Vector3(xPrimeCoord * coneTruncateRadius, yTopCoord * coneTruncateHeight, zPrimeCoord * coneTruncateRadius));
 
             // TODO If the cylinder isn't truncated the second triangle and top face triangle is useless
             // Face first triangle
