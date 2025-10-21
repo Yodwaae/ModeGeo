@@ -30,11 +30,19 @@ public class NewMonoBehaviourScript : MonoBehaviour
     public int coneFaceCount;
     public int coneHeight;
     public float coneRadius;
-    [Range(0f, 1f)]public float coneTruncateHeight;
-    [Range(0f, 1f)]public float coneTruncateRadius;
+    [Range(0f, 1f)]public float coneTopHeightFactor;
+    [Range(0f, 1f)]public float coneTopRadiusFactor;
 
     List<Vector3> vertices = new List<Vector3>();
     List<int> triangles = new List<int>();
+
+    // Helper function, will advise on if it's helpful or not
+    private Vector3 Multiply(Vector3 vec1, Vector3 vec2)
+    {
+        Vector3 res = new Vector3(vec1.x * vec2.x, vec1.y * vec2.y, vec1.z * vec2.z);
+
+        return res;
+    }
 
     void OnDrawGizmos()
     {
@@ -62,7 +70,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
         triangles.Add(index1);
         triangles.Add(index2);
         triangles.Add(index3);
-        // Counter clock-wise //TODO Find a way to have two way geometry without causing lighting problem
+        // Counter clock-wise
         //triangles.Add(index3);
         //triangles.Add(index2);
         //triangles.Add(index1);
@@ -90,11 +98,29 @@ public class NewMonoBehaviourScript : MonoBehaviour
         // Clear the mesh
         mesh.Clear();
 
+
+        // TODO Double sided geometry temp implementation (should I move that to the addTriangles func() ?
+        int originalVertCount = vertices.Count;
+        // Duplicate vertices and flip normals
+        List<Vector3> doubleVertices = new List<Vector3>(vertices);
+        doubleVertices.AddRange(vertices);
+        List<int> doubleTriangles = new List<int>(triangles);
+
+        // Add flipped triangles
+        for (int i = 0; i < triangles.Count; i += 3)
+        {
+            doubleTriangles.Add(triangles[i] + originalVertCount);
+            doubleTriangles.Add(triangles[i + 2] + originalVertCount);
+            doubleTriangles.Add(triangles[i + 1] + originalVertCount);
+        }
+
         // Create the new mesh
-        mesh.vertices = vertices.ToArray();
-        mesh.triangles = triangles.ToArray();
+        mesh.vertices = doubleVertices.ToArray();
+        mesh.triangles = doubleTriangles.ToArray();
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
+
+        // What if, after recalculating Normals, I looped through the normal and set every even one to be the opposite of the odd just before ?
 
         // Empty the List after creating the mesh
         vertices.Clear();
@@ -182,8 +208,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
         }
     }
 
-    // TODO Quick cone implementation, honestly could use drawCylinder with an additionnal argument to the function to control the cylinder/cone "opening"
-    // Could make the cone up or down facing just put the 0 in the top or bottom vertices
+    // TODO Could optimize the function more if the cone isn't truncated, but is it worth it ?
     private void DrawCone()
     {
         // Initialisation
@@ -192,11 +217,11 @@ public class NewMonoBehaviourScript : MonoBehaviour
         int bottomVertexIndex = 0;
         int topVertexIndex = 1;
         float angleStep = (2 * Mathf.PI) / coneFaceCount;
+        Vector3 topFactorVector = new Vector3(coneTopRadiusFactor, coneTopHeightFactor, coneTopRadiusFactor);
 
         // Adding centered top and bottom vertex
         vertices.Add(new Vector3(0, -coneHeight / 2, 0)); // BOTTOM
-        vertices.Add(new Vector3(0, coneHeight / 2 * coneTruncateHeight, 0)); // TOP
-
+        vertices.Add(new Vector3(0, coneHeight / 2 * coneTopHeightFactor, 0)); // TOP
 
         for (int i = 0; i < coneFaceCount; i++)
         {
@@ -217,19 +242,23 @@ public class NewMonoBehaviourScript : MonoBehaviour
             vertices.Add(new Vector3(xCoord, yBottomCoord, zCoord));
             vertices.Add(new Vector3(xPrimeCoord, yBottomCoord, zPrimeCoord));
             
-            // Top vertices // TODO Do I create an helper function for vector3 member by member multiplication ?
-            vertices.Add(new Vector3(xCoord * coneTruncateRadius, yTopCoord * coneTruncateHeight, zCoord * coneTruncateRadius));
-            vertices.Add(new Vector3(xPrimeCoord * coneTruncateRadius, yTopCoord * coneTruncateHeight, zPrimeCoord * coneTruncateRadius));
+            // Top vertices 
+            vertices.Add(Multiply(new Vector3(xCoord, yTopCoord, zCoord), topFactorVector));
+            vertices.Add(Multiply(new Vector3(xPrimeCoord, yTopCoord, zPrimeCoord), topFactorVector));
 
-            // TODO If the cylinder isn't truncated the second triangle and top face triangle is useless
             // Face first triangle
             AddTriangles(vertexIndex + 2, vertexIndex + 1, vertexIndex);
-            // Face second triangle
-            AddTriangles(vertexIndex + 2, vertexIndex + 3, vertexIndex + 1);
             // Bottom face triangle
             AddTriangles(bottomVertexIndex, vertexIndex, vertexIndex + 1);
-            // Top face triangle
-            AddTriangles(vertexIndex + 3, vertexIndex + 2, topVertexIndex);
+       
+            // Add those triangles only if the cone is truncated, else they are useless
+            if (coneTopRadiusFactor > 0){
+                // Face second triangle
+                AddTriangles(vertexIndex + 2, vertexIndex + 3, vertexIndex + 1);
+                // Top face triangle
+                AddTriangles(vertexIndex + 3, vertexIndex + 2, topVertexIndex);
+            }
+
         }
     }
 
