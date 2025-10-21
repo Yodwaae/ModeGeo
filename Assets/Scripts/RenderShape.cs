@@ -61,10 +61,10 @@ public class NewMonoBehaviourScript : MonoBehaviour
         triangles.Add(index1);
         triangles.Add(index2);
         triangles.Add(index3);
-        // Counter clock-wise
-        triangles.Add(index3);
-        triangles.Add(index2);
-        triangles.Add(index1);
+        // Counter clock-wise //TODO Find a way to have two way geometry without causing lighting problem
+        //triangles.Add(index3);
+        //triangles.Add(index2);
+        //triangles.Add(index1);
     }
 
     private void RenderMesh()
@@ -76,7 +76,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
         // Create the new mesh
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
-        //mesh.RecalculateNormals(); // TODO Deactivated normals recomputation so I I can easily have both way facing triangle (cause a light bug if activated because unity thinks the 2 opposite triangle have thr same normal)
+        mesh.RecalculateNormals();
         mesh.RecalculateBounds();
 
         // Empty the List after creating the mesh
@@ -165,9 +165,8 @@ public class NewMonoBehaviourScript : MonoBehaviour
         }
     }
 
-    // TODO Quick cone implementation, far from perfec and with lot of code duplication from DrawCylinder
+    // TODO Quick cone implementation, honestly could use drawCylinder with an additionnal argument to the function to control the cylinder/cone "opening"
     // Could make the cone up or down facing just put the 0 in the top or bottom vertices
-    // Need to add the logic that allow truncating the cone (will probably need to change part of the draw logic)
     private void DrawCone()
     {
         // Initialisation
@@ -178,8 +177,8 @@ public class NewMonoBehaviourScript : MonoBehaviour
         float angleStep = (2 * Mathf.PI) / coneFaceCount;
 
         // Adding centered top and bottom vertex
-        vertices.Add(new Vector3(0, -coneHeight / 2, 0));
-        vertices.Add(new Vector3(0, coneHeight / 2, 0));
+        vertices.Add(new Vector3(0, -coneHeight / 2, 0)); // BOTTOM
+        vertices.Add(new Vector3(0, coneHeight / 2, 0)); // TOP
 
         for (int i = 0; i < coneFaceCount; i++)
         {
@@ -199,11 +198,22 @@ public class NewMonoBehaviourScript : MonoBehaviour
             // Bottom vertices
             vertices.Add(new Vector3(xCoord, yBottomCoord, zCoord));
             vertices.Add(new Vector3(xPrimeCoord, yBottomCoord, zPrimeCoord));
+            
+            // TODO Found the quick trick to create truncated cone, instead of hardcoding 0 as the x and z coords
+            // I compute them as usual then I multiply them by factor to reduce the size of the top section (if I wanto have something consistant I should multiply the ycoord by the same factor)
+            // Top vertices
+            vertices.Add(new Vector3(xCoord * 0, yTopCoord, zCoord * 0));
+            vertices.Add(new Vector3(xPrimeCoord *0, yTopCoord, zPrimeCoord * 0));
 
-            // Face triangle
-            AddTriangles(topVertexIndex, vertexIndex + 1, vertexIndex);
+            // TODO If the cylinder isn't truncated the second triangle and top face triangle is useless
+            // Face first triangle
+            AddTriangles(vertexIndex + 2, vertexIndex + 1, vertexIndex);
+            // Face second triangle
+            AddTriangles(vertexIndex + 2, vertexIndex + 3, vertexIndex + 1);
             // Bottom face triangle
             AddTriangles(bottomVertexIndex, vertexIndex, vertexIndex + 1);
+            // Top face triangle
+            AddTriangles(vertexIndex + 3, vertexIndex + 2, topVertexIndex);
         }
     }
 
