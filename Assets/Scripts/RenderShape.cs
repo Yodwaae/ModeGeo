@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using UnityEngine;
 using static UnityEditor.Searcher.SearcherWindow.Alignment;
@@ -8,8 +9,10 @@ public enum Shape
     Plane,
     Cylinder,
     Cone,
+    Sphere,
 }
 
+// TODO Rename variables for clarity sake (and maybe also add/change some comments)
 public class NewMonoBehaviourScript : MonoBehaviour
 {
     [Header("Shape")]
@@ -32,6 +35,12 @@ public class NewMonoBehaviourScript : MonoBehaviour
     public float coneRadius = 8f;
     [Range(0f, 1f)]public float coneTopHeightFactor = 1f;
     [Range(0f, 1f)]public float coneTopRadiusFactor= 0f;
+
+    [Header("Sphere")]
+    public int sphereNbMeridian = 20;
+    public int sphereNbParallel = 20;
+    public float sphereRadius = 10f;
+
 
     List<Vector3> vertices = new List<Vector3>();
     List<int> triangles = new List<int>();
@@ -57,6 +66,9 @@ public class NewMonoBehaviourScript : MonoBehaviour
                 break;
             case Shape.Cone:
                 DrawCone();
+                break;
+            case Shape.Sphere:
+                DrawSphere();
                 break;
         }
 
@@ -171,8 +183,8 @@ public class NewMonoBehaviourScript : MonoBehaviour
         float angleStep = (2 * Mathf.PI) / cylinderFaceCount;
 
         // Adding centered top and bottom vertex
-        vertices.Add(new Vector3(0, -cylinderHeight / 2, 0));
-        vertices.Add(new Vector3(0, cylinderHeight / 2, 0));
+        vertices.Add(new Vector3(0, -cylinderHeight / 2, 0)); // Bottom
+        vertices.Add(new Vector3(0, cylinderHeight / 2, 0)); // Top
 
         for (int i = 0; i < cylinderFaceCount; i++)
         {
@@ -260,6 +272,76 @@ public class NewMonoBehaviourScript : MonoBehaviour
             }
 
         }
+    }
+
+    private void DrawSphere()
+    { 
+        // Initialisation
+        float medianStep = (2 * Mathf.PI) / sphereNbMeridian;
+        float parallelStep = Mathf.PI / sphereNbParallel;
+        int bottomVertexIndex = 0; 
+        int topVertexIndex = 1; 
+
+        // Adding centered top and bottom vertex
+        vertices.Add(new Vector3(0, -sphereRadius, 0)); // BOTTOM
+        vertices.Add(new Vector3(0, sphereRadius, 0)); // TOP
+        
+        // Meridian Loop
+        for (int i = 0; i < sphereNbMeridian; i++) { 
+
+            float meridian = i * medianStep; 
+            float nextMeridian = ((i + 1)) * medianStep;
+
+            // Parallels Loop
+            for (int j = 0; j < sphereNbParallel; j++) {
+
+                // Loop initialisation
+                int vertexIndex = vertices.Count;
+                float parallel = j * parallelStep;
+                float nextParallel = (j + 1) * parallelStep;
+
+                float parallelRadius = sphereRadius * Mathf.Sin(parallel);
+                float nextParallelRadius = sphereRadius * Mathf.Sin(nextParallel);
+
+                // Coord computation 
+                // X
+                float xCur = parallelRadius * Mathf.Cos(meridian);
+                float xNextPar = nextParallelRadius * Mathf.Cos(meridian);
+                float xNextMer = parallelRadius * Mathf.Cos(nextMeridian);
+                float xNextParMer = nextParallelRadius * Mathf.Cos(nextMeridian);
+                // Y
+                float yCur = sphereRadius * Mathf.Cos(parallel);
+                float yNextPar = sphereRadius * Mathf.Cos(nextParallel);
+                // Z
+                float zCur = parallelRadius * Mathf.Sin(meridian);
+                float zNextPar = nextParallelRadius * Mathf.Sin(meridian);
+                float zNextMer = parallelRadius * Mathf.Sin(nextMeridian);
+                float zNextParMer = nextParallelRadius * Mathf.Sin(nextMeridian);
+
+                // Top vertices
+                vertices.Add(new Vector3(xCur, yCur, zCur));  // Top left
+                vertices.Add(new Vector3(xNextMer, yCur, zNextMer));  // Top right
+
+                // Bottom vertices
+                vertices.Add(new Vector3(xNextPar, yNextPar, zNextPar));  // Bottom left
+                vertices.Add(new Vector3(xNextParMer, yNextPar, zNextParMer));  // Bottom right
+
+
+
+                // Face first triangle
+                AddTriangles(vertexIndex + 2, vertexIndex + 1, vertexIndex); 
+                // Face second triangle
+                AddTriangles(vertexIndex + 2, vertexIndex + 3, vertexIndex + 1);
+
+                // Bottom face triangle if we're at the last parallel
+                if (j == sphereNbParallel)
+                   AddTriangles(bottomVertexIndex, vertexIndex, vertexIndex + 1);
+
+                // Top face triangle if we're at the last parallel
+                if (j ==  0)
+                    AddTriangles(vertexIndex, vertexIndex + 1, topVertexIndex);
+            } 
+        } 
     }
 
 }
