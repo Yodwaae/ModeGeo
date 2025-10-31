@@ -16,22 +16,22 @@ public class NewMonoBehaviourScript : MonoBehaviour
     public Shape shape = Shape.Plane;
 
     [Header("Plane")]
-    public int planeHeight;
-    public int planeWidth;
-    public int planeNbCol;
-    public int planeNbLine;
+    public int planeHeight = 4;
+    public int planeWidth = 4;
+    public int planeNbCol = 1;
+    public int planeNbLine = 1;
 
     [Header("Cylinder")]
-    public int cylinderFaceCount;
-    public int cylinderHeight;
-    public float cylinderRadius;
+    public int cylinderFaceCount = 16;
+    public int cylinderHeight = 32;
+    public float cylinderRadius = 8f;
 
     [Header("Cone")]
-    public int coneFaceCount;
-    public int coneHeight;
-    public float coneRadius;
-    [Range(0f, 1f)]public float coneTopHeightFactor;
-    [Range(0f, 1f)]public float coneTopRadiusFactor;
+    public int coneFaceCount = 16;
+    public int coneHeight = 32;
+    public float coneRadius = 8f;
+    [Range(0f, 1f)]public float coneTopHeightFactor = 1f;
+    [Range(0f, 1f)]public float coneTopRadiusFactor= 0f;
 
     List<Vector3> vertices = new List<Vector3>();
     List<int> triangles = new List<int>();
