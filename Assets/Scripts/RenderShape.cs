@@ -13,7 +13,7 @@ public enum Shape
 }
 
 // TODO Rename variables for clarity sake (and maybe also add/change some comments)
-public class NewMonoBehaviourScript : MonoBehaviour
+public class RenderShape : MonoBehaviour
 {
     [Header("Shape")]
     public Shape shape = Shape.Plane;
@@ -40,6 +40,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
     public int sphereNbMeridian = 20;
     public int sphereNbParallel = 20;
     public float sphereRadius = 10f;
+    [Range(0f, 1f)] public float sphereTruncationRation = 0f;
 
 
     List<Vector3> vertices = new List<Vector3>();
@@ -279,6 +280,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
         // Initialisation
         float medianStep = (2 * Mathf.PI) / sphereNbMeridian;
         float parallelStep = Mathf.PI / sphereNbParallel;
+        float truncatedStep = sphereRadius / sphereNbParallel;
         int bottomVertexIndex = 0; 
         int topVertexIndex = 1; 
 
@@ -287,7 +289,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
         vertices.Add(new Vector3(0, sphereRadius, 0)); // TOP
         
         // Meridian Loop
-        for (int i = 0; i < sphereNbMeridian; i++) { 
+        for (int i = 0; i < sphereNbMeridian - 1; i++) { 
 
             float meridian = i * medianStep; 
             float nextMeridian = ((i + 1)) * medianStep;
@@ -299,6 +301,9 @@ public class NewMonoBehaviourScript : MonoBehaviour
                 int vertexIndex = vertices.Count;
                 float parallel = j * parallelStep;
                 float nextParallel = (j + 1) * parallelStep;
+
+                float truncatedPoint = truncatedStep * j;
+                float nextTruncatedPoint = truncatedStep * (j + 1);
 
                 float parallelRadius = sphereRadius * Mathf.Sin(parallel);
                 float nextParallelRadius = sphereRadius * Mathf.Sin(nextParallel);
@@ -326,6 +331,9 @@ public class NewMonoBehaviourScript : MonoBehaviour
                 vertices.Add(new Vector3(xNextPar, yNextPar, zNextPar));  // Bottom left
                 vertices.Add(new Vector3(xNextParMer, yNextPar, zNextParMer));  // Bottom right
 
+                // Truncated vertices
+                vertices.Add(new Vector3(0, yCur, 0));
+                vertices.Add(new Vector3(0, yNextPar, 0));
 
 
                 // Face first triangle
@@ -334,14 +342,29 @@ public class NewMonoBehaviourScript : MonoBehaviour
                 AddTriangles(vertexIndex + 2, vertexIndex + 3, vertexIndex + 1);
 
                 // Bottom face triangle if we're at the last parallel
-                if (j == sphereNbParallel)
-                   AddTriangles(bottomVertexIndex, vertexIndex, vertexIndex + 1);
+                if (j == sphereNbParallel){
+                    AddTriangles(bottomVertexIndex, vertexIndex, vertexIndex + 1);
+                }
+
+                if (i == sphereNbMeridian - 2){
+                    AddTriangles(vertexIndex + 1, vertexIndex + 4, vertexIndex + 3);
+                    AddTriangles(vertexIndex + 4, vertexIndex + 5, vertexIndex + 3);
+                }
 
                 // Top face triangle if we're at the last parallel
-                if (j ==  0)
+                if (j == 0){
                     AddTriangles(vertexIndex, vertexIndex + 1, topVertexIndex);
+                    AddTriangles(vertexIndex, vertexIndex + 1, topVertexIndex);
+                }
+
+                if (i == 0)
+                {
+                    AddTriangles(vertexIndex, vertexIndex + 2, vertexIndex + 4);
+                    AddTriangles(vertexIndex + 2, vertexIndex + 5, vertexIndex + 4);
+                }
+
             } 
-        } 
+        }
     }
 
 }
