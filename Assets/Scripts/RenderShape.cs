@@ -145,26 +145,26 @@ public class RenderShape : MonoBehaviour
     private void DrawPlane()
     {
 
-        for (int x = 0; x < planeNbCol; x++)
+        for (int i = 0; i < planeNbCol; i++)
         {
-            for (int y = 0; y < planeNbLine; y++)
+            for (int j = 0; j < planeNbLine; j++)
             {
                 // Loop Initialisation
                 int vertexIndex = vertices.Count;
 
                 // Coord computation
                 // X
-                float xCoord = x * planeWidth;
-                float xPrimeCoord = (x + 1) * planeWidth;
+                float xCur = i * planeWidth;
+                float xNext = (i + 1) * planeWidth;
                 // Y
-                float yCoord = y * planeHeight;
-                float yPrimeCoord = (y + 1) * planeHeight;
+                float yCur = j * planeHeight;
+                float yNext = (j + 1) * planeHeight;
 
                 // Quad vertices
-                vertices.Add(new Vector3(xCoord, yCoord, 0));
-                vertices.Add(new Vector3(xPrimeCoord, yCoord, 0));
-                vertices.Add(new Vector3(xCoord, yPrimeCoord, 0));
-                vertices.Add(new Vector3(xPrimeCoord, yPrimeCoord, 0));
+                vertices.Add(new Vector3(xCur, yCur, 0));
+                vertices.Add(new Vector3(xNext, yCur, 0));
+                vertices.Add(new Vector3(xCur, yNext, 0));
+                vertices.Add(new Vector3(xNext, yNext, 0));
 
                 // First triangle
                 AddTriangles(vertexIndex, vertexIndex + 1, vertexIndex + 2);
@@ -177,9 +177,9 @@ public class RenderShape : MonoBehaviour
     private void DrawCylinder()
     {
         // Initialisation
-        float yBottomCoord = -cylinderHeight / 2;
-        float yTopCoord = cylinderHeight / 2;
-        int bottomVertexIndex = 0;
+        float yBot = -cylinderHeight / 2;
+        float yTop = cylinderHeight / 2;
+        int botVertexIndex = 0;
         int topVertexIndex = 1;
         float angleStep = (2 * Mathf.PI) / cylinderFaceCount;
 
@@ -197,25 +197,25 @@ public class RenderShape : MonoBehaviour
             // Coord computation
             // X
             float xCoord = cylinderRadius * Mathf.Cos(angle);
-            float xPrimeCoord = cylinderRadius * Mathf.Cos(nextAngle);
+            float xNextCoord = cylinderRadius * Mathf.Cos(nextAngle);
             // Z
             float zCoord = cylinderRadius * Mathf.Sin(angle);
-            float zPrimeCoord = cylinderRadius * Mathf.Sin(nextAngle);
+            float zNextCoord = cylinderRadius * Mathf.Sin(nextAngle);
 
             // Bottom vertices
-            vertices.Add(new Vector3(xCoord, yBottomCoord, zCoord));
-            vertices.Add(new Vector3(xPrimeCoord, yBottomCoord, zPrimeCoord));
+            vertices.Add(new Vector3(xCoord, yBot, zCoord));
+            vertices.Add(new Vector3(xNextCoord, yBot, zNextCoord));
 
             // Top vertices
-            vertices.Add(new Vector3(xCoord, yTopCoord, zCoord));
-            vertices.Add(new Vector3(xPrimeCoord, yTopCoord, zPrimeCoord));
+            vertices.Add(new Vector3(xCoord, yTop, zCoord));
+            vertices.Add(new Vector3(xNextCoord, yTop, zNextCoord));
 
             // Face first triangle
             AddTriangles(vertexIndex + 2, vertexIndex + 1, vertexIndex);
             // Face second triangle
             AddTriangles(vertexIndex + 2, vertexIndex + 3, vertexIndex + 1);
             // Bottom face triangle
-            AddTriangles(bottomVertexIndex, vertexIndex, vertexIndex + 1);
+            AddTriangles(botVertexIndex, vertexIndex, vertexIndex + 1);
             // Top face triangle
             AddTriangles(vertexIndex + 3, vertexIndex + 2, topVertexIndex);
         }
@@ -225,9 +225,9 @@ public class RenderShape : MonoBehaviour
     private void DrawCone()
     {
         // Initialisation
-        float yBottomCoord = -coneHeight / 2;
-        float yTopCoord = coneHeight / 2;
-        int bottomVertexIndex = 0;
+        float yBot = -coneHeight / 2;
+        float yTop = coneHeight / 2;
+        int botVertexIndex = 0;
         int topVertexIndex = 1;
         float angleStep = (2 * Mathf.PI) / coneFaceCount;
         Vector3 topFactorVector = new Vector3(coneTopRadiusFactor, coneTopHeightFactor, coneTopRadiusFactor);
@@ -245,24 +245,24 @@ public class RenderShape : MonoBehaviour
 
             // Coord computation
             // X
-            float xCoord = coneRadius * Mathf.Cos(angle);
-            float xPrimeCoord = coneRadius * Mathf.Cos(nextAngle);
+            float xCur = coneRadius * Mathf.Cos(angle);
+            float xNext = coneRadius * Mathf.Cos(nextAngle);
             // Z
-            float zCoord = coneRadius * Mathf.Sin(angle);
-            float zPrimeCoord = coneRadius * Mathf.Sin(nextAngle);
+            float zCur = coneRadius * Mathf.Sin(angle);
+            float zNext = coneRadius * Mathf.Sin(nextAngle);
 
             // Bottom vertices
-            vertices.Add(new Vector3(xCoord, yBottomCoord, zCoord));
-            vertices.Add(new Vector3(xPrimeCoord, yBottomCoord, zPrimeCoord));
+            vertices.Add(new Vector3(xCur, yBot, zCur));
+            vertices.Add(new Vector3(xNext, yBot, zNext));
             
             // Top vertices 
-            vertices.Add(Multiply(new Vector3(xCoord, yTopCoord, zCoord), topFactorVector));
-            vertices.Add(Multiply(new Vector3(xPrimeCoord, yTopCoord, zPrimeCoord), topFactorVector));
+            vertices.Add(Multiply(new Vector3(xCur, yTop, zCur), topFactorVector));
+            vertices.Add(Multiply(new Vector3(xNext, yTop, zNext), topFactorVector));
 
             // Face first triangle
             AddTriangles(vertexIndex + 2, vertexIndex + 1, vertexIndex);
             // Bottom face triangle
-            AddTriangles(bottomVertexIndex, vertexIndex, vertexIndex + 1);
+            AddTriangles(botVertexIndex, vertexIndex, vertexIndex + 1);
        
             // Add those triangles only if the cone is truncated, else they are useless
             if (coneTopRadiusFactor > 0){
@@ -281,7 +281,7 @@ public class RenderShape : MonoBehaviour
         float medianStep = (2 * Mathf.PI) / sphereNbMeridian;
         float parallelStep = Mathf.PI / sphereNbParallel;
         int lastMeridian = (int) (sphereNbMeridian * (1- sphereTruncationRatio));
-        int bottomVertexIndex = 0; 
+        int botVertexIndex = 0; 
         int topVertexIndex = 1; 
 
         // Adding centered top and bottom vertex
@@ -335,7 +335,7 @@ public class RenderShape : MonoBehaviour
 
                 // Bottom face triangle if we're at the last parallel
                 if (j == sphereNbParallel){
-                    AddTriangles(bottomVertexIndex, vertexIndex, vertexIndex + 1);
+                    AddTriangles(botVertexIndex, vertexIndex, vertexIndex + 1);
                 }
                 // Top face triangle if we're at the last parallel
                 if (j == 0){
@@ -343,20 +343,20 @@ public class RenderShape : MonoBehaviour
                     AddTriangles(vertexIndex, vertexIndex + 1, topVertexIndex);
                 }
 
-                // Create the truncated vertices and triangles only if the sphere is truncated (if not truncated not drawing them avoid normal problems)
+                // Create the truncation vertices and triangles only if the sphere is truncated (if not truncated not drawing them avoid normal problems)
                 if (sphereTruncationRatio != 0)
                 {
-                    // Truncated vertices
+                    // Truncation vertices
                     vertices.Add(new Vector3(0, yCur, 0));
                     vertices.Add(new Vector3(0, yNextPar, 0));
 
-                    // Truncated last meridian faces
+                    // Truncation last meridian faces
                     if (i == lastMeridian - 1)
                     {
                         AddTriangles(vertexIndex + 1, vertexIndex + 4, vertexIndex + 3);
                         AddTriangles(vertexIndex + 4, vertexIndex + 5, vertexIndex + 3);
                     }
-                    // Truncated first meridian faces
+                    // Truncation first meridian faces
                     if (i == 0)
                     {
                         AddTriangles(vertexIndex, vertexIndex + 2, vertexIndex + 4);
