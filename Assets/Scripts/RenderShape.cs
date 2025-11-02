@@ -234,7 +234,7 @@ public class RenderShape : MonoBehaviour
 
         // Adding centered top and bottom vertex
         vertices.Add(new Vector3(0, -coneHeight / 2, 0)); // BOTTOM
-        vertices.Add(new Vector3(0, coneHeight / 2 * coneTopHeightFactor, 0)); // TOP
+        vertices.Add(new Vector3(0, coneHeight / 2 * coneTopHeightFactor, 0)); // TOP // TODO Fix it so that a cone Top Height Factor of 0 creates a flat cone
 
         for (int i = 0; i < coneFaceCount; i++)
         {
