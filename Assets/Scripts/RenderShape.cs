@@ -33,7 +33,7 @@ public class RenderShape : MonoBehaviour
     public int coneFaceCount = 16;
     public int coneHeight = 32;
     public float coneRadius = 8f;
-    [Range(0f, 1f)]public float coneTopHeightFactor = 1f;
+    [Range(0f, 1f)]public float coneHeightFactor = 1f;
     [Range(0f, 1f)]public float coneTopRadiusFactor= 0f;
 
     [Header("Sphere")]
@@ -225,16 +225,17 @@ public class RenderShape : MonoBehaviour
     private void DrawCone()
     {
         // Initialisation
-        float yBot = -coneHeight / 2;
-        float yTop = coneHeight / 2;
+        float height = coneHeight * coneHeightFactor;
+        float yBot = 0;
+        float yTop = height;
         int botVertexIndex = 0;
         int topVertexIndex = 1;
         float angleStep = (2 * Mathf.PI) / coneFaceCount;
-        Vector3 topFactorVector = new Vector3(coneTopRadiusFactor, coneTopHeightFactor, coneTopRadiusFactor);
+        Vector3 topFactorVector = new Vector3(coneTopRadiusFactor, 1, coneTopRadiusFactor);
 
         // Adding centered top and bottom vertex
-        vertices.Add(new Vector3(0, -coneHeight / 2, 0)); // BOTTOM
-        vertices.Add(new Vector3(0, coneHeight / 2 * coneTopHeightFactor, 0)); // TOP // TODO Fix it so that a cone Top Height Factor of 0 creates a flat cone
+        vertices.Add(new Vector3(0, yBot, 0)); // BOTTOM
+        vertices.Add(new Vector3(0, yTop, 0)); // TOP
 
         for (int i = 0; i < coneFaceCount; i++)
         {

@@ -457,7 +457,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abbb7749e3b9d3a48b9a6e6f16f05a45, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  shape: 3
+  shape: 2
   planeHeight: 4
   planeWidth: 4
   planeNbCol: 1
@@ -468,7 +468,7 @@ MonoBehaviour:
   coneFaceCount: 16
   coneHeight: 32
   coneRadius: 8
-  coneTopHeightFactor: 1
+  coneHeightFactor: 1
   coneTopRadiusFactor: 0
   sphereNbMeridian: 20
   sphereNbParallel: 20
