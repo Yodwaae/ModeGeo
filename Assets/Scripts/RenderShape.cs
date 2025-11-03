@@ -10,6 +10,7 @@ public enum Shape
     Cylinder,
     Cone,
     Sphere,
+    None,
 }
 
 // TODO Rename variables for clarity sake (and maybe also add/change some comments)
@@ -54,7 +55,7 @@ public class RenderShape : MonoBehaviour
         return res;
     }
 
-    void OnDrawGizmos()
+    private void OnDrawGizmos()
     {
         // Draw the mesh
         switch (shape) {
@@ -70,6 +71,8 @@ public class RenderShape : MonoBehaviour
                 break;
             case Shape.Sphere:
                 DrawSphere();
+                break;
+            case Shape.None:
                 break;
         }
 
@@ -96,6 +99,7 @@ public class RenderShape : MonoBehaviour
             return;
 
         #if UNITY_EDITOR
+            // TODO To see as this can create a problem, the changes are applied to all object using the same base mesh filter while in editor
             // In editor mode use shared mesh to avoid memory leakage
             Mesh mesh = meshFilter.sharedMesh;
             if (mesh == null)
