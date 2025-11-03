@@ -25,6 +25,10 @@ public class MeshImporter : MonoBehaviour
 
     private void OnDrawGizmos()
     {
+        // Early exit if no file
+        if (!meshOff)
+            return;
+
         // File Reading
         offText = meshOff.text;
         eachLine = new List<string>();
