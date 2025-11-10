@@ -188,15 +188,14 @@ public class MeshImporter : MonoBehaviour
 
     private void NormaliseMesh()
     {
-        // Get the max coord value (abs) for normalisation
+        // Initialisation
         float max = 0;
+
+        // Get the max coord value (abs) for normalisation
         for (int i = 0; i < verticesNb; i++) {
-            if (Mathf.Abs(vertices[i][0]) > max)
-                max = Mathf.Abs(vertices[i][0]);
-            if (Mathf.Abs(vertices[i][1]) > max)
-                max = Mathf.Abs(vertices[i][1]);
-            if (Mathf.Abs(vertices[i][2]) > max)
-                max = Mathf.Abs(vertices[i][2]);
+            float vertexMax = Mathf.Max(Mathf.Abs(vertices[i][1]), Mathf.Abs(vertices[i][1]), Mathf.Abs(vertices[i][2]));
+            if (vertexMax > max) 
+                max = vertexMax;
         }
 
         // Shouldn't happen but we're never too careful
@@ -206,7 +205,6 @@ public class MeshImporter : MonoBehaviour
         // Apply the normalisation
         for (int i = 0; i < verticesNb; i++)
             vertices[i] /= max;
-
     }
 
     private void AddTriangles(int index1, int index2, int index3)
