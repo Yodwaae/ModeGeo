@@ -8,16 +8,21 @@ using UnityEngine;
 
 public class MeshImporter : MonoBehaviour
 {
+    // TODO Regroup and create helpers function (could even create a separate script since some helpers are common to RenderShape and MeshImporter)
+    // TODO Is there a way to parseInt earlier ? Whil reading the file ? (Not sure since some of them needs to be float and other int (float for vertices, int for triangles))
     [SerializeField] private TextAsset meshOff;
+    [SerializeField][Min(0)] private int facesToRemove = 0;
+    [SerializeField] private float normalsAngle = 180;
+    [SerializeField] private bool meshExported = true; // NOTE : Not the cleanest but works for now
+
+
+    // Mesh var
     private int verticesNb;
     private int trianglesNb;
     List<Vector3> vertices = new List<Vector3>();
     List<int> triangles = new List<int>();
 
-    // TODO Regroup and create helpers function (could even create a separate script since some helpers are common to RenderShape and MeshImporter)
-    // TODO Is there a way to parseInt earlier ? Whil reading the file ? (Not sure since some of them needs to be float and other int (float for vertices, int for triangles))
-
-    // TEMP ?
+    // Text parsing var
     private string offText;
     private List<string> eachLine;
     private List<string> vertexLines;
@@ -45,8 +50,13 @@ public class MeshImporter : MonoBehaviour
         CenterMeshOnCentroid();
         NormaliseMesh();
         CreateTriangles();
-        RenderMesh();
 
+        // Export Mesh
+        if (!meshExported)
+            ExportMesh();
+
+        // Render Mesh
+        RenderMesh();
     }
 
     private bool FileIsValid()
@@ -63,8 +73,6 @@ public class MeshImporter : MonoBehaviour
             // Split the second line to separate the number of vertices, triangles and faces
             List<string> counterLine = new List<string>();
             counterLine.AddRange(eachLine[1].Split(" "));
-
-            Debug.Log(string.Join(" | ", counterLine));
 
             // If there is not 3 entries in the second line then the file isn't valid
             if (counterLine.Count != 3)
@@ -125,7 +133,8 @@ public class MeshImporter : MonoBehaviour
         // Create the new mesh
         mesh.vertices = doubleVertices.ToArray();
         mesh.triangles = doubleTriangles.ToArray();
-        mesh.RecalculateNormals();
+        CustomRecalculateNormals(mesh, normalsAngle);
+        //mesh.RecalculateNormals();
         mesh.RecalculateBounds();
 
         // Empty the List after creating the mesh
@@ -154,9 +163,18 @@ public class MeshImporter : MonoBehaviour
 
     private void CreateTriangles()
     {
+        // NOTE : We only remove faces not vertices
+        // Clamp the number of faces to remove so it stays within valid bounds then re-set the trianglesNb
+        if (facesToRemove > trianglesNb)
+            facesToRemove = trianglesNb;
+        else if (facesToRemove < 0)
+            facesToRemove = 0;
+        trianglesNb -= facesToRemove;
+
         // Get the lines with the triangles "corrds"
         triangleLines = eachLine.Skip(2 + verticesNb).Take(trianglesNb).ToList();
 
+        // Create the triangles
         for (int i = 0; i < trianglesNb; i++)
         {
             // NOTE This MeshImporter script only works with triangles
@@ -219,8 +237,60 @@ public class MeshImporter : MonoBehaviour
         //triangles.Add(index1);
     }
 
-    private void ExportMesh()
+    public void ExportMesh()
     {
+        // Set the flag to prevent further mesh export
+        meshExported = true;
+        int faceNumber = trianglesNb / 3;
 
+        // Create the File Header // TODO FIX THE PROBLEM HERE
+        string content = "OFF\n" + verticesNb + " " + faceNumber + " " + trianglesNb + "\n"; 
+
+        // Add the vertices line to the text
+        for (int i = 0; i < verticesNb; i++)
+            content += vertices[i][0].ToString(CultureInfo.InvariantCulture) + " " + vertices[i][1].ToString(CultureInfo.InvariantCulture) + " " + vertices[i][2].ToString(CultureInfo.InvariantCulture) + "\n";
+        
+        // Add the triangles line to the text
+        for (int i = 0; i < faceNumber; i+=3)
+            content += "3 " + triangles[i] + " " + triangles[i+1] + " " + triangles[i+2] + "\n";
+        
+        // File Path
+        string path = Application.persistentDataPath + "/" + meshOff.name + "Output.off";
+        // Write the file
+        File.WriteAllText(path, content);
+        Debug.Log("File written at: " + path);
+    }
+
+    private static void CustomRecalculateNormals(Mesh mesh, float angle)
+    {
+        // Initialisation
+        var triangles = mesh.triangles;
+        var vertices = mesh.vertices;
+        var normals = new Vector3[vertices.Length];
+        //var angleCos = Mathf.Cos(angle * Mathf.Deg2Rad);
+
+        // Compute the normal for each triangles
+        for (int i = 0; i < triangles.Length; i += 3)
+        {
+            // Compute current triangle vertices' index
+            int firstPointIndex = triangles[i];
+            int secondPointIndex = triangles[i + 1];
+            int thirdPointIndex = triangles[i + 2];
+
+            // Compute the current triangle normal
+            Vector3 v1 = vertices[secondPointIndex] - vertices[firstPointIndex];
+            Vector3 v2 = vertices[thirdPointIndex] - vertices[firstPointIndex];
+            Vector3 normal = Vector3.Cross(v1, v2).normalized;
+
+            // Add 
+            normals[firstPointIndex] += normal;
+            normals[secondPointIndex] += normal;
+            normals[thirdPointIndex] += normal;
+        }
+
+        // Normalise the normals and set them as the mesh normals
+        for (int i = 0; i < normals.Length; i++)
+            normals[i] = normals[i].normalized;
+        mesh.normals = normals;
     }
 }
