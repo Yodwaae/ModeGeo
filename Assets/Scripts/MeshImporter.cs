@@ -239,19 +239,22 @@ public class MeshImporter : MonoBehaviour
 
     public void ExportMesh()
     {
+        // NOTE : trianglesNB is the number of triangles (directly extracted from the off file)
+        // but the triangles number in meshes in unity is 3 times that number
+        // because is doesn't store the triangle directly but every triangles points indexes separately
+
         // Set the flag to prevent further mesh export
         meshExported = true;
-        int faceNumber = trianglesNb / 3;
 
-        // Create the File Header // TODO FIX THE PROBLEM HERE
-        string content = "OFF\n" + verticesNb + " " + faceNumber + " " + trianglesNb + "\n"; 
+        // Create the File Header
+        string content = "OFF\n" + verticesNb + " " + trianglesNb + " " + 0 + "\n"; 
 
         // Add the vertices line to the text
         for (int i = 0; i < verticesNb; i++)
             content += vertices[i][0].ToString(CultureInfo.InvariantCulture) + " " + vertices[i][1].ToString(CultureInfo.InvariantCulture) + " " + vertices[i][2].ToString(CultureInfo.InvariantCulture) + "\n";
         
         // Add the triangles line to the text
-        for (int i = 0; i < faceNumber; i+=3)
+        for (int i = 0; i < triangles.Count; i+=3)
             content += "3 " + triangles[i] + " " + triangles[i+1] + " " + triangles[i+2] + "\n";
         
         // File Path
