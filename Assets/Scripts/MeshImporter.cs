@@ -40,11 +40,13 @@ public class MeshImporter : MonoBehaviour
             return;
         }
         
-
+        // Mesh Creation
         CreateVertices();
+        CenterMeshOnCentroid();
+        NormaliseMesh();
         CreateTriangles();
-        
         RenderMesh();
+
     }
 
     private bool FileIsValid()
@@ -126,8 +128,6 @@ public class MeshImporter : MonoBehaviour
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
 
-        // What if, after recalculating Normals, I looped through the normal and set every even one to be the opposite of the odd just before ?
-
         // Empty the List after creating the mesh
         vertices.Clear();
         triangles.Clear();
@@ -135,31 +135,77 @@ public class MeshImporter : MonoBehaviour
 
     private void CreateVertices()
     {
-        // Get the lines ...
+        // Get the lines with the vertices coords
         vertexLines = eachLine.Skip(2).Take(verticesNb).ToList();
 
-        // TODO Loop directly on the list ?
         for (int i = 0; i < verticesNb; i++){
-            // TODO Improve this, potentially parse before that ?
+            // Slit the 3 coords (x, y, z) of the line
             List<string> coords = new List<string>();
             coords.AddRange(vertexLines[i].Split(" "));
-            vertices.Add(new Vector3(float.Parse(coords[0], CultureInfo.InvariantCulture), float.Parse(coords[1], CultureInfo.InvariantCulture), float.Parse(coords[2], CultureInfo.InvariantCulture)));
-        }
-    }
 
+            // Parse the coords from text then add them to the vertices
+            float x = float.Parse(coords[0], CultureInfo.InvariantCulture);
+            float y = float.Parse(coords[1], CultureInfo.InvariantCulture);
+            float z = float.Parse(coords[2], CultureInfo.InvariantCulture);
+            vertices.Add(new Vector3(x, y, z));
+        }
+
+    }
 
     private void CreateTriangles()
     {
-        // Get the lines ....
+        // Get the lines with the triangles "corrds"
         triangleLines = eachLine.Skip(2 + verticesNb).Take(trianglesNb).ToList();
 
-        // TODO Loop directly on the list
         for (int i = 0; i < trianglesNb; i++)
         {
+            // NOTE This MeshImporter script only works with triangles
+            // Split the triangle pt indexes (nbPt, p1, p2, p3)
             List<string> indexes = new List<string>();
             indexes.AddRange(triangleLines[i].Split(" "));
-            AddTriangles(int.Parse(indexes[1]), int.Parse(indexes[2]), int.Parse(indexes[3]));
+
+            // Par the pt indexes from text then add the triangle
+            int p1 = int.Parse(indexes[1]);
+            int p2 = int.Parse(indexes[2]);
+            int p3 = int.Parse(indexes[3]);
+            AddTriangles(p1, p2, p3);
         }
+
+    }
+
+    private void CenterMeshOnCentroid()
+    {
+        // Compute the centroid
+        Vector3 sum = Vector3.zero;
+        for (int i = 0; i < verticesNb; i++)
+            sum += vertices[i];
+
+        // Fix the centroid
+        Vector3 centroid = sum / verticesNb;
+        for (int i = 0; i < verticesNb; i++)
+            vertices[i] -= centroid;
+    }
+
+    private void NormaliseMesh()
+    {
+        // Get the max coord value (abs) for normalisation
+        float max = 0;
+        for (int i = 0; i < verticesNb; i++) {
+            if (Mathf.Abs(vertices[i][0]) > max)
+                max = Mathf.Abs(vertices[i][0]);
+            if (Mathf.Abs(vertices[i][1]) > max)
+                max = Mathf.Abs(vertices[i][1]);
+            if (Mathf.Abs(vertices[i][2]) > max)
+                max = Mathf.Abs(vertices[i][2]);
+        }
+
+        // Shouldn't happen but we're never too careful
+        if (max == 0)
+            return;
+
+        // Apply the normalisation
+        for (int i = 0; i < verticesNb; i++)
+            vertices[i] /= max;
 
     }
 
@@ -173,5 +219,10 @@ public class MeshImporter : MonoBehaviour
         //triangles.Add(index3);
         //triangles.Add(index2);
         //triangles.Add(index1);
+    }
+
+    private void ExportMesh()
+    {
+
     }
 }
