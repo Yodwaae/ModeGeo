@@ -13,7 +13,6 @@ public class MeshImporter : MonoBehaviour
     [SerializeField] private TextAsset meshOff;
     [SerializeField][Min(0)] private int facesToRemove = 0;
     [SerializeField] private float normalsAngle = 180;
-    [SerializeField] private bool meshExported = true; // NOTE : Not the cleanest but works for now
 
 
     // Mesh var
@@ -50,10 +49,6 @@ public class MeshImporter : MonoBehaviour
         CenterMeshOnCentroid();
         NormaliseMesh();
         CreateTriangles();
-
-        // Export Mesh
-        if (!meshExported)
-            ExportMesh();
 
         // Render Mesh
         RenderMesh();
@@ -114,7 +109,6 @@ public class MeshImporter : MonoBehaviour
         // Clear the mesh
         mesh.Clear();
 
-
         // TODO Double sided geometry temp implementation (should I move that to the addTriangles func() ?
         int originalVertCount = vertices.Count;
         // Duplicate vertices and flip normals
@@ -136,14 +130,13 @@ public class MeshImporter : MonoBehaviour
         CustomRecalculateNormals(mesh, normalsAngle);
         //mesh.RecalculateNormals();
         mesh.RecalculateBounds();
-
-        // Empty the List after creating the mesh
-        vertices.Clear();
-        triangles.Clear();
     }
 
     private void CreateVertices()
     {
+        // Initialisation
+        vertices.Clear();
+
         // Get the lines with the vertices coords
         vertexLines = eachLine.Skip(2).Take(verticesNb).ToList();
 
@@ -163,6 +156,9 @@ public class MeshImporter : MonoBehaviour
 
     private void CreateTriangles()
     {
+        // Initialisation
+        triangles.Clear();
+
         // NOTE : We only remove faces not vertices
         // Clamp the number of faces to remove so it stays within valid bounds then re-set the trianglesNb
         if (facesToRemove > trianglesNb)
@@ -237,14 +233,12 @@ public class MeshImporter : MonoBehaviour
         //triangles.Add(index1);
     }
 
+    [ContextMenu("Export Mesh")]
     public void ExportMesh()
     {
         // NOTE : trianglesNB is the number of triangles (directly extracted from the off file)
         // but the triangles number in meshes in unity is 3 times that number
         // because is doesn't store the triangle directly but every triangles points indexes separately
-
-        // Set the flag to prevent further mesh export
-        meshExported = true;
 
         // Create the File Header
         string content = "OFF\n" + verticesNb + " " + trianglesNb + " " + 0 + "\n"; 
