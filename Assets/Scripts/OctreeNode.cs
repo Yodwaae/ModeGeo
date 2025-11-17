@@ -4,6 +4,7 @@ public class OctreeNode
 {
     public OctreeNode[] children;
     public bool isLeaf;
+    public int depth;
 
     public static OctreeNode CreateRoot(int desiredDepth) {
         Debug.Log("Started Tree Creation");
@@ -14,8 +15,9 @@ public class OctreeNode
     {
         Debug.Log(depth);
 
-        // Create the node
+        // Create the node and set it's depth
         OctreeNode node = new OctreeNode();
+        node.depth = depth;
 
         // If we're at maxDepth then the node is a leaf, in that case returns it as is
         if (depth == maxDepth) {
