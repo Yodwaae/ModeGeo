@@ -42,6 +42,10 @@ public class VoxelShape : MonoBehaviour
 
     private void RenderVoxelShape(OctreeNode parentNode)
     {
+        // If the node is a leaf makes an ealy exit
+        if (parentNode.isLeaf) 
+            return;
+
         // Loop through all children
         for (int i = 0; i < parentNode.children.Length; i++) {
             OctreeNode childNode = parentNode.children[i];
@@ -54,11 +58,11 @@ public class VoxelShape : MonoBehaviour
             // TODO Improve the function : should take directly the node as argument and test wheter it's completely inside, partially inside or not inside at all
             isInsideSphere(childNode);
 
-            // If the node is a leaf or is full create the mesh
+            // If the node is full create the mesh
             // Else if the node is not fully empty, create it's children recursively
-            if (childNode.isLeaf && childNode.isFull) // TODO Right now it's an && because isFull is partially implemanted, but in the future isLeaf will be removed from the cond
+            if (childNode.isFull)
                 SpawnMesh(childNode);
-            else if (!childNode.isEmpty && !childNode.isLeaf) // TODO should I just skip leaf at the start of the function it would be less aribtrary than putting that here
+            else if (!childNode.isEmpty)
                 RenderVoxelShape(childNode);
 
         }
@@ -85,19 +89,30 @@ public class VoxelShape : MonoBehaviour
     // TODO Implement the empty, and make it so a voxel is tag full only if fully inside the sphere
     private void isInsideSphere(OctreeNode node)
     {
-        // NOTE We used squared distance to have abs values and avoid using sqrt which can be slower
+        // NOTE We used squared distance to avoid using sqrt which can be slower
 
-        // Compute distance between node center and sphere center
-        float sqrDist = (node.position - boundingBoxPos).sqrMagnitude;
-        // Compute the distance from the center of the sphere to its outer boundary
+        // Initialisation
+        bool allCornersInside = true;
+        bool allCornersOutside = true;
         float sqrRadius = sphereRadius * sphereRadius;
 
-        // If the distance to the center of the node is greater than the distance to the outer boundary
-        // then the voxel is, at least partially, inside the sphere
-        node.isFull = sqrDist <= sqrRadius;
-        
-        
-        // node.isEmpty = sqrDist > sqrRadius;
-    }
+        // Loop through each corners of the voxel to see if they are inside the sphere
+        for (int i = 0; i < 8; i++) {
 
+            // TODO Clean this mess of a computation
+            // Compute distance between node corner and sphere center
+            float sqrDist = ((node.position + posArray[i] * node.scale.x) - boundingBoxPos).sqrMagnitude;
+
+            // If the dist. to the corner is smaller than the radius then it's inside the sphere
+            // Else it's outside
+            if (sqrDist <= sqrRadius)
+                allCornersOutside = false;
+            else
+                allCornersInside = false;
+        }
+
+        // If all corners are inside/outisde the sphere, the voxel is full/empty
+        node.isFull = allCornersInside;
+        node.isEmpty = allCornersOutside;
+    }
 }
