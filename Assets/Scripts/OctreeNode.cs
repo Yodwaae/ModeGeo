@@ -5,6 +5,8 @@ public class OctreeNode
     public OctreeNode[] children;
     public bool isLeaf;
     public int depth;
+    public Vector3 mPosition = Vector3.zero; // TODO Do I leave this here as default values or should I set it in create root ?
+    public Vector3 mScale = Vector3.one;
 
     public static OctreeNode CreateRoot(int desiredDepth) {
         Debug.Log("Started Tree Creation");
