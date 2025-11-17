@@ -6,16 +6,18 @@ public class VoxelShape : MonoBehaviour
 {
     [Header("Shape values")]
     public float sphereRadius;
-    // TODO Could add a sphereCenter that set to the root node pos
+    public Vector3 boundingBoxPos; // NOTE Will effectively serve as sphere center
+    public float boundingBoxScale; // NOTE Using a float so the scale is uniform and the voxels are cubes
 
     [Header("Tree values")]
     private OctreeNode treeRoot;
-    [SerializeField] private int desiredDepth;
+    [SerializeField, Range(0, 5)] private int desiredDepth;
 
     [Header("Voxel values")]
     [SerializeField] private Mesh cube;
     [SerializeField] private Material material;
-    private Vector3[] posArray = { 
+    private Vector3[] posArray = new Vector3[8]; 
+    private Vector3[] cornerPosArray = { 
         new Vector3(.5f, .5f , .5f),
         new Vector3(-.5f, .5f, .5f),
         new Vector3(.5f, .5f, -.5f),
@@ -26,7 +28,15 @@ public class VoxelShape : MonoBehaviour
         new Vector3(-.5f, -.5f , -.5f),
     };
 
-    private void Awake() { treeRoot = OctreeNode.CreateRoot(desiredDepth); }
+    private void Awake() 
+    { 
+        // Create the root
+        treeRoot = OctreeNode.CreateRoot(desiredDepth, boundingBoxPos, boundingBoxScale);
+
+        // Create the posArray for the voxel based on corners pos and voxel scale
+        for (int i = 0; i < 8; i++)
+            posArray[i] = cornerPosArray[i] * boundingBoxScale;
+    }
 
     private void Start() { RenderVoxelShape(treeRoot); }
 
@@ -72,8 +82,22 @@ public class VoxelShape : MonoBehaviour
         
     }
 
-    private void isInsideSphere(OctreeNode node) 
-    { 
-        node.isFull = node.position.sqrMagnitude <= sphereRadius * sphereRadius; 
+    // TODO Implement the empty, and make it so a voxel is tag full only if fully inside the sphere
+    private void isInsideSphere(OctreeNode node)
+    {
+        // NOTE We used squared distance to have abs values and avoid using sqrt which can be slower
+
+        // Compute distance between node center and sphere center
+        float sqrDist = (node.position - boundingBoxPos).sqrMagnitude;
+        // Compute the distance from the center of the sphere to its outer boundary
+        float sqrRadius = sphereRadius * sphereRadius;
+
+        // If the distance to the center of the node is greater than the distance to the outer boundary
+        // then the voxel is, at least partially, inside the sphere
+        node.isFull = sqrDist <= sqrRadius;
+        
+        
+        // node.isEmpty = sqrDist > sqrRadius;
     }
+
 }

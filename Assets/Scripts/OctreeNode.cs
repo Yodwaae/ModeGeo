@@ -5,13 +5,22 @@ public class OctreeNode
     public OctreeNode[] children;
     public bool isLeaf;
     public int depth;
-    public Vector3 position = Vector3.zero; // TODO Do I leave this here as default values or should I set it in create root ?
-    public Vector3 scale = Vector3.one;
+    public Vector3 position;
+    public Vector3 scale;
 
     public bool isFull;
     public bool isEmpty;
 
-    public static OctreeNode CreateRoot(int desiredDepth) { return CreateNode(0, desiredDepth); }
+    public static OctreeNode CreateRoot(int desiredDepth, Vector3 position, float scale) 
+    {
+
+        // Create the root
+        OctreeNode root = CreateNode(0, desiredDepth);
+        root.scale = new Vector3(scale, scale, scale);
+        root.position = position;
+
+        return root;  
+    }
 
     private static OctreeNode CreateNode(int depth, int maxDepth)
     {
