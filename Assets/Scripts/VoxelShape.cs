@@ -6,8 +6,10 @@ public class VoxelShape : MonoBehaviour
 {
     [Header("Shape values")]
     public float sphereRadius;
-    public Vector3 boundingBoxPos; // NOTE Will effectively serve as sphere center
-    public float boundingBoxScale; // NOTE Using a float so the scale is uniform and the voxels are cubes
+    public Vector3 boundingBoxPos = Vector3.one; // NOTE Will effectively serve as sphere center
+    public float boundingBoxScale = 1; // NOTE Using a single float so the scale is uniform and the voxels are cubes
+    [Tooltip("The number of entry in this array determines the numbers of sphere, the vector 3 determines it's center")] public Vector3[] sphereCenters;
+
 
     [Header("Tree values")]
     private OctreeNode treeRoot;
@@ -36,6 +38,7 @@ public class VoxelShape : MonoBehaviour
         // Create the posArray for the voxel based on corners pos and voxel scale
         for (int i = 0; i < 8; i++)
             posArray[i] = cornerPosArray[i] * boundingBoxScale;
+
     }
 
     private void Start() { RenderVoxelShape(treeRoot); }
@@ -99,13 +102,22 @@ public class VoxelShape : MonoBehaviour
         // Loop through each corners of the voxel to see if they are inside the sphere
         for (int i = 0; i < 8; i++) {
 
-            // TODO Clean this mess of a computation
-            // Compute distance between node corner and sphere center
-            float sqrDist = ((node.position + posArray[i] * node.scale.x) - boundingBoxPos).sqrMagnitude;
+            // Loop Initialisation
+            bool cornerIsInside = false;
 
-            // If the dist. to the corner is smaller than the radius then it's inside the sphere
-            // Else it's outside
-            if (sqrDist <= sqrRadius)
+            // TODO COM Check for each spheres
+            for (int j = 0; j < sphereCenters.Length; j++) { // TODO For each instead ?
+                // Compute distance between node corner and sphere center
+                float sqrDist = ((node.position + posArray[i] * node.scale.x) - sphereCenters[j]).sqrMagnitude;  // TODO Clean this mess of a computation
+
+                // If the dist. to the corner is smaller than the radius then it's inside the sphere
+                if (sqrDist <= sqrRadius)
+                    cornerIsInside = true;
+            }
+
+            // If one corner is inside then all corners are not outisde
+            // Else if the conrer is outside all corners are not inside
+            if (cornerIsInside)
                 allCornersOutside = false;
             else
                 allCornersInside = false;
