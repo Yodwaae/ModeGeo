@@ -11,6 +11,8 @@ public class OctreeNode
     public bool isFull;
     public bool isEmpty;
 
+    // TODO Right now the Octree is not really adaptative, only the voxel display is
+
     public static OctreeNode CreateRoot(int desiredDepth, Vector3 position, float scale) 
     {
 

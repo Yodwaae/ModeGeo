@@ -2,9 +2,16 @@ using System.Linq;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
+public enum VoxelMode {
+    Union,
+    Intersection,
+    WIPUnionMinusIntersectionWIP,
+}
+
 public class VoxelShape : MonoBehaviour
 {
     [Header("Shape values")]
+    public VoxelMode mode;
     public float sphereRadius;
     public Vector3 boundingBoxPos = Vector3.one; // NOTE Will effectively serve as sphere center
     public float boundingBoxScale = 1; // NOTE Using a single float so the scale is uniform and the voxels are cubes
@@ -58,7 +65,7 @@ public class VoxelShape : MonoBehaviour
             childNode.position = parentNode.position + (posArray[i] * factor);
             childNode.scale = parentNode.scale * .5f;
 
-            // TODO Improve the function : should take directly the node as argument and test wheter it's completely inside, partially inside or not inside at all
+            // Check if the node is inside a sphere
             isInsideSphere(childNode);
 
             // If the node is full create the mesh
@@ -89,7 +96,6 @@ public class VoxelShape : MonoBehaviour
         
     }
 
-    // TODO Implement the empty, and make it so a voxel is tag full only if fully inside the sphere
     private void isInsideSphere(OctreeNode node)
     {
         // NOTE We used squared distance to avoid using sqrt which can be slower
@@ -105,18 +111,27 @@ public class VoxelShape : MonoBehaviour
             // Loop Initialisation
             bool cornerIsInside = false;
 
-            // TODO COM Check for each spheres
-            for (int j = 0; j < sphereCenters.Length; j++) { // TODO For each instead ?
-                // Compute distance between node corner and sphere center
-                float sqrDist = ((node.position + posArray[i] * node.scale.x) - sphereCenters[j]).sqrMagnitude;  // TODO Clean this mess of a computation
+            // Check the corner against each sphere
+            foreach (Vector3 sphereCenter in sphereCenters) {
+
+                // Compute corner distance to sphere center
+                Vector3 cornerPos = (node.position + posArray[i] * node.scale.x);
+                float sqrDist = (cornerPos - sphereCenter).sqrMagnitude;
 
                 // If the dist. to the corner is smaller than the radius then it's inside the sphere
                 if (sqrDist <= sqrRadius)
                     cornerIsInside = true;
-            }
 
-            // If one corner is inside then all corners are not outisde
-            // Else if the conrer is outside all corners are not inside
+                // If we're in intersection mode as soon as the corner is not in a sphere, set the flag back to false and exit
+                if (mode == VoxelMode.Intersection && sqrDist > sqrRadius){
+                    cornerIsInside = false;
+                    break;
+                }
+            }
+ 
+
+            // If one corner is inside then obviously all corners are not outside
+            // Idem with the reverse
             if (cornerIsInside)
                 allCornersOutside = false;
             else
