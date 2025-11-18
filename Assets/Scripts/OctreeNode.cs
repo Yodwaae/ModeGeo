@@ -11,35 +11,28 @@ public class OctreeNode
     public bool isFull;
     public bool isEmpty;
 
-    // TODO Right now the Octree is not really adaptative, only the voxel display is
 
     public static OctreeNode CreateRoot(int desiredDepth, Vector3 position, float scale) 
     {
 
         // Create the root
-        OctreeNode root = CreateNode(0, desiredDepth);
+        OctreeNode root = new OctreeNode();
         root.scale = new Vector3(scale, scale, scale);
         root.position = position;
 
         return root;  
     }
 
-    private static OctreeNode CreateNode(int depth, int maxDepth)
+    public static OctreeNode CreateNode(int depth, int maxDepth)
     {
+        Debug.Log(depth);
         // Create the node and set it's depth
         OctreeNode node = new OctreeNode();
         node.depth = depth;
 
-        // If we're at maxDepth then the node is a leaf, in that case returns it as is
-        if (depth == maxDepth) {
+        // If we're at maxDepth then the node is a leaf
+        if (depth == maxDepth)
             node.isLeaf = true;
-            return node;
-        }
-
-        // Else the node it's just a classic node then recursively create it's children before returning it
-        node.children = new OctreeNode[8];
-        for (int i = 0; i < 8; i++)
-            node.children[i] = CreateNode(depth + 1, maxDepth);
 
         return node;
     }

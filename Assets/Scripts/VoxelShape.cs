@@ -15,6 +15,7 @@ public class VoxelShape : MonoBehaviour
     public float sphereRadius;
     public Vector3 boundingBoxPos = Vector3.one; // NOTE Will effectively serve as sphere center
     public float boundingBoxScale = 1; // NOTE Using a single float so the scale is uniform and the voxels are cubes
+    // TODO Precise it's local or world pos and modify distance to center distance accodringly
     [Tooltip("The number of entry in this array determines the numbers of sphere, the vector 3 determines it's center")] public Vector3[] sphereCenters;
 
 
@@ -50,32 +51,43 @@ public class VoxelShape : MonoBehaviour
 
     private void Start() { RenderVoxelShape(treeRoot); }
 
-    private void RenderVoxelShape(OctreeNode parentNode)
+    private void RenderVoxelShape(OctreeNode node)
     {
         // If the node is a leaf makes an ealy exit
-        if (parentNode.isLeaf) 
+        if (node.isLeaf) 
             return;
 
-        // Loop through all children
-        for (int i = 0; i < parentNode.children.Length; i++) {
-            OctreeNode childNode = parentNode.children[i];
+        // Check if the node is inside a sphere
+        isInsideSphere(node);
 
-            // Compute the scale and position of the node
-            float factor = 1 / Mathf.Pow(2, childNode.depth);
-            childNode.position = parentNode.position + (posArray[i] * factor);
-            childNode.scale = parentNode.scale * .5f;
-
-            // Check if the node is inside a sphere
-            isInsideSphere(childNode);
-
-            // If the node is full create the mesh
-            // Else if the node is not fully empty, create it's children recursively
-            if (childNode.isFull)
-                SpawnMesh(childNode);
-            else if (!childNode.isEmpty)
-                RenderVoxelShape(childNode);
-
+        // If the node is full create the mesh
+        // Else if the node is not fully empty, create it's children recursively
+        if (node.isFull) { 
+            SpawnMesh(node);
+            return;
         }
+        else if (!node.isEmpty)
+        {
+            // Else the node it's just a classic node then recursively create it's children before returning it
+            node.children = new OctreeNode[8];
+            for (int i = 0; i < 8; i++) {
+
+                // Create the child node
+                OctreeNode childNode = OctreeNode.CreateNode(node.depth + 1, desiredDepth);
+
+                // Compute the scale and position of the node
+                float factor = 1 / Mathf.Pow(2, node.depth);
+                childNode.position = node.position + (posArray[i] * factor);
+                childNode.scale = node.scale * .5f;
+
+                // Add the child node to the parentNode array
+                node.children[i] = childNode;
+
+                RenderVoxelShape(childNode);
+            }
+        }
+
+
     }
 
 
@@ -115,7 +127,7 @@ public class VoxelShape : MonoBehaviour
             foreach (Vector3 sphereCenter in sphereCenters) {
 
                 // Compute corner distance to sphere center
-                Vector3 cornerPos = (node.position + posArray[i] * node.scale.x);
+                Vector3 cornerPos = (node.position + posArray[i] * node.scale.x); // FIXME/TODO Right now sphereCenter isn't taken into account
                 float sqrDist = (cornerPos - sphereCenter).sqrMagnitude;
 
                 // If the dist. to the corner is smaller than the radius then it's inside the sphere
