@@ -4,6 +4,7 @@ public class OctreeNode
 {
     public OctreeNode[] children;
     public bool isLeaf;
+    public bool isRoot;
     public int depth;
     public Vector3 position;
     public Vector3 scale;
@@ -19,6 +20,7 @@ public class OctreeNode
         OctreeNode root = new OctreeNode();
         root.scale = new Vector3(scale, scale, scale);
         root.position = position;
+        root.isRoot = true;
 
         return root;  
     }
