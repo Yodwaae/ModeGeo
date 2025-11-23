@@ -51,46 +51,6 @@ public class VoxelShape : MonoBehaviour
 
     private void Start() { RenderVoxelShape(treeRoot); }
 
-    /*private void RenderVoxelShape(OctreeNode node)
-    {
-
-        // Check if the node is inside a sphere
-        isInsideSphere(node);
-
-        // If the node is full create the mesh
-        // Else if the node is not fully empty, create it's children recursively
-        if (node.isFull) { 
-            SpawnMesh(node);
-            return;
-        }
-
-        // TODO COM If the node is a leaf makes an ealy exit
-        if (node.isLeaf)
-            return;
-
-        if (!node.isEmpty)
-        {
-            // Else the node it's just a classic node then recursively create it's children before returning it
-            node.children = new OctreeNode[8];
-            for (int i = 0; i < 8; i++) {
-
-                // Create the child node
-                OctreeNode childNode = OctreeNode.CreateNode(node.depth + 1, desiredDepth);
-
-                // Compute the scale and position of the node
-                float factor = 1 / Mathf.Pow(2, node.depth);
-                childNode.position = node.position + (posArray[i] * factor);
-                childNode.scale = node.scale * .5f;
-
-                // Add the child node to the parentNode array
-                node.children[i] = childNode;
-
-                RenderVoxelShape(childNode);
-            }
-        }
-
-    }*/
-
     // TODO I'm sure there a better implementation to find but for the moment it's working !
     private void RenderVoxelShape(OctreeNode parentNode)
     {
@@ -193,57 +153,3 @@ public class VoxelShape : MonoBehaviour
         node.isEmpty = allCornersOutside;
     }
 }
-
-
-
-
-/*
-private void isInsideSphere(OctreeNode node)
-{
-    // NOTE We used squared distance to avoid using sqrt which can be slower
-
-    // Initialisation
-    bool allCornersInside = true;
-    bool allCornersOutside = true;
-    float sqrRadius = sphereRadius * sphereRadius;
-
-    // Loop through each corners of the voxel to see if they are inside the sphere
-    for (int i = 0; i < 8; i++)
-    {
-
-        // Loop Initialisation
-        bool cornerIsInside = false;
-
-        // Check the corner against each sphere
-        foreach (Vector3 sphereCenter in sphereCenters)
-        {
-
-            // Compute corner distance to sphere center
-            Vector3 cornerPos = (node.position + posArray[i] * node.scale.x);
-            float sqrDist = (cornerPos - sphereCenter).sqrMagnitude;
-
-            // If the dist. to the corner is smaller than the radius then it's inside the sphere
-            if (sqrDist <= sqrRadius)
-                cornerIsInside = true;
-
-            // If we're in intersection mode as soon as the corner is not in a sphere, set the flag back to false and exit
-            if (mode == VoxelMode.Intersection && sqrDist > sqrRadius)
-            {
-                cornerIsInside = false;
-                break;
-            }
-        }
-
-
-        // If one corner is inside then obviously all corners are not outside
-        // Idem with the reverse
-        if (cornerIsInside)
-            allCornersOutside = false;
-        else
-            allCornersInside = false;
-    }
-
-    // If all corners are inside/outisde the sphere, the voxel is full/empty
-    node.isFull = allCornersInside;
-    node.isEmpty = allCornersOutside;
-}*/
