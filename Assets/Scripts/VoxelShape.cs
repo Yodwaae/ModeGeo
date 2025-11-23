@@ -124,13 +124,20 @@ public class VoxelShape : MonoBehaviour
 
     private void SpawnMesh(OctreeNode node)
     {
-        // Create a new game obj for the voxel, then place it in the curent obj
+        // Create a new voxel GameObject and attach it under this VoxelShape object
         GameObject obj = new GameObject("Voxel");
         obj.transform.SetParent(transform, false);
 
         // Add a mesh filter and renderer to it
         MeshFilter filter = obj.AddComponent<MeshFilter>();
         MeshRenderer renderer = obj.AddComponent<MeshRenderer>();
+
+        // Add a BoxCollider used as a trigger volume
+        BoxCollider collider = obj.AddComponent<BoxCollider>();
+        collider.isTrigger = true;
+        // Attach voxel behaviour script so the voxel can react to trigger events
+        VoxelBehaviour voxelBehaviour = obj.AddComponent<VoxelBehaviour>();
+        voxelBehaviour.meshRenderer = renderer;
 
         // Set the voxel mesh and material
         filter.sharedMesh = cube;

@@ -27,7 +27,6 @@ public class OctreeNode
 
     public static OctreeNode CreateNode(int depth, int maxDepth)
     {
-        Debug.Log(depth);
         // Create the node and set it's depth
         OctreeNode node = new OctreeNode();
         node.depth = depth;
