@@ -1,8 +1,9 @@
-using System.Linq;
-using UnityEditor.Experimental.GraphView;
+#if UNITY_EDITOR
+using UnityEditor;
 using UnityEngine;
 
-public enum VoxelMode {
+public enum VoxelMode
+{
     Union,
     Intersection,
     WIPUnionMinusIntersectionWIP,
@@ -16,8 +17,8 @@ public class VoxelShape : MonoBehaviour
     public Vector3 boundingBoxPos = Vector3.one; // NOTE Will effectively serve as sphere center
     public float boundingBoxScale = 1; // NOTE Using a single float so the scale is uniform and the voxels are cubes
     // TODO Precise it's local or world pos and modify distance to center distance accodringly
-    [Tooltip("The number of entry in this array determines the numbers of sphere, the vector 3 determines it's center")] public Vector3[] sphereCenters;
-
+    [Tooltip("The number of entry in this array determines the numbers of sphere, the vector 3 determines it's center")]
+    public Vector3[] sphereCenters;
 
     [Header("Tree values")]
     private OctreeNode treeRoot;
@@ -26,8 +27,8 @@ public class VoxelShape : MonoBehaviour
     [Header("Voxel values")]
     [SerializeField] private Mesh cube;
     [SerializeField] private Material material;
-    private Vector3[] posArray = new Vector3[8]; 
-    private Vector3[] cornerPosArray = { 
+    private Vector3[] posArray = new Vector3[8];
+    private Vector3[] cornerPosArray = {
         new Vector3(.5f, .5f , .5f),
         new Vector3(-.5f, .5f, .5f),
         new Vector3(.5f, .5f, -.5f),
@@ -38,8 +39,33 @@ public class VoxelShape : MonoBehaviour
         new Vector3(-.5f, -.5f , -.5f),
     };
 
-    private void Awake() 
-    { 
+    private bool pendingRebuild = false;
+
+    private void OnValidate()
+    {
+        // In edit mode, schedule regeneration OUTSIDE OnValidate (otherwise we can't use destroyImmediate)
+        if (!Application.isPlaying && !pendingRebuild) {
+            pendingRebuild = true;
+            EditorApplication.delayCall += Rebuild;
+        }
+    }
+
+    private void Rebuild()
+    {
+        // Security in case the obj is deleted before callback runs
+        if (this == null)
+            return;
+
+        // Since we're rebuilding, set the flag to false
+        pendingRebuild = false;
+
+        // Remove all previously generated voxels then rebuild octree + voxels
+        ClearChildren();
+        Init();
+    }
+
+    private void Init()
+    {
         // Create the root
         treeRoot = OctreeNode.CreateRoot(desiredDepth, boundingBoxPos, boundingBoxScale);
 
@@ -47,28 +73,35 @@ public class VoxelShape : MonoBehaviour
         for (int i = 0; i < 8; i++)
             posArray[i] = cornerPosArray[i] * boundingBoxScale;
 
+        RenderVoxelShape(treeRoot);
     }
 
-    private void Start() { RenderVoxelShape(treeRoot); }
+    private void ClearChildren()
+    {
+        // Destroy all child voxels safely in edit mode
+        for (int i = transform.childCount - 1; i >= 0; i--)
+            DestroyImmediate(transform.GetChild(i).gameObject);
+    }
 
-    // TODO I'm sure there a better implementation to find but for the moment it's working !
+
     private void RenderVoxelShape(OctreeNode parentNode)
     {
         // If the node is a leaf makes an ealy exit
         if (parentNode.isLeaf)
             return;
 
+        // If we're at the root check if we need to create a single HUGE voxel
         if (parentNode.isRoot) {
             isInsideSphere(parentNode);
-            if (parentNode.isFull){
+            if (parentNode.isFull) {
                 SpawnMesh(parentNode);
                 return;
             }
         }
-            
 
         // Loop through all children
         for (int i = 0; i < 8; i++) {
+            // Create the node
             OctreeNode childNode = OctreeNode.CreateNode(parentNode.depth + 1, desiredDepth);
 
             // Compute the scale and position of the node
@@ -91,8 +124,11 @@ public class VoxelShape : MonoBehaviour
 
     private void SpawnMesh(OctreeNode node)
     {
-        // Create a new game obj for the voxel, then adds a mesh filter and renderer to it
+        // Create a new game obj for the voxel, then place it in the curent obj
         GameObject obj = new GameObject("Voxel");
+        obj.transform.SetParent(transform, false);
+
+        // Add a mesh filter and renderer to it
         MeshFilter filter = obj.AddComponent<MeshFilter>();
         MeshRenderer renderer = obj.AddComponent<MeshRenderer>();
 
@@ -103,8 +139,9 @@ public class VoxelShape : MonoBehaviour
         // Scale and place
         obj.transform.localScale = node.scale;
         obj.transform.position = node.position;
-        
+
     }
+
 
     private void isInsideSphere(OctreeNode node)
     {
@@ -133,12 +170,11 @@ public class VoxelShape : MonoBehaviour
                     cornerIsInside = true;
 
                 // If we're in intersection mode as soon as the corner is not in a sphere, set the flag back to false and exit
-                if (mode == VoxelMode.Intersection && sqrDist > sqrRadius){
+                if (mode == VoxelMode.Intersection && sqrDist > sqrRadius) {
                     cornerIsInside = false;
                     break;
                 }
             }
- 
 
             // If one corner is inside then obviously all corners are not outside
             // Idem with the reverse
@@ -153,3 +189,5 @@ public class VoxelShape : MonoBehaviour
         node.isEmpty = allCornersOutside;
     }
 }
+
+#endif
