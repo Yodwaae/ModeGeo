@@ -27,6 +27,7 @@ public class VoxelShape : MonoBehaviour
     [Header("Voxel values")]
     [SerializeField] private Mesh cube;
     [SerializeField] private Material material;
+    [SerializeField] private float voxelScale = 1;
     private Vector3[] posArray = new Vector3[8];
     private Vector3[] cornerPosArray = {
         new Vector3(.5f, .5f , .5f),
@@ -144,7 +145,7 @@ public class VoxelShape : MonoBehaviour
         renderer.sharedMaterial = material;
 
         // Scale and place
-        obj.transform.localScale = node.scale;
+        obj.transform.localScale = node.scale * voxelScale;
         obj.transform.position = node.position;
 
     }
@@ -195,6 +196,7 @@ public class VoxelShape : MonoBehaviour
         node.isFull = allCornersInside;
         node.isEmpty = allCornersOutside;
     }
+
 }
 
 #endif
