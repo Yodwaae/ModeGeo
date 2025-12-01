@@ -6,8 +6,8 @@ using UnityEngine;
 public class VertexClustering : MonoBehaviour
 {
 
-    private int gridSize;
-    public float cellSize;
+    private int cellSize;
+    public int cellNumber;
 
     private List<GameObject> cells = new List<GameObject>();
     private bool pendingRebuild;
@@ -16,7 +16,7 @@ public class VertexClustering : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void RegenerateGrid()
     {
-
+        // Mesh
         var meshFilter = GetComponent<MeshFilter>();
         if (meshFilter == null)
             return;
@@ -24,12 +24,8 @@ public class VertexClustering : MonoBehaviour
         // Mesh infos
         Mesh mesh = meshFilter.sharedMesh;
         Vector3 meshSize = mesh.bounds.size;
-
-        gridSize = Mathf.CeilToInt(Mathf.Max(meshSize.x, meshSize.y, meshSize.z) / cellSize);
-
-        // TODO Compute gridsize by dividing the mesh size by the cell size (start with the greatest between width, length, depth; then I'll do one for each)
-        // TODO Base myself on the mesh centroid and go in both direction ?
-
+        float cellSize = Mathf.Max(meshSize.x, meshSize.y, meshSize.z)/ cellNumber;
+        float offset = (cellNumber - 1) * cellSize / 2;
 
         // Reset
         pendingRebuild = false;
@@ -37,9 +33,9 @@ public class VertexClustering : MonoBehaviour
             DestroyImmediate(cell);
 
         // N3 complexity (kinda shit)
-        for (int i = 0; i < gridSize; i++) {
-            for (int j = 0; j < gridSize; j++) {
-                for (int k = 0; k < gridSize; k++) {
+        for (int i = 0; i < cellNumber; i++) {
+            for (int j = 0; j < cellNumber; j++) {
+                for (int k = 0; k < cellNumber; k++) {
 
                     // New Cell Creation
                     GameObject obj = new GameObject("Cell");
@@ -52,7 +48,7 @@ public class VertexClustering : MonoBehaviour
 
                     // Transform
                     obj.transform.localScale = new Vector3(cellSize, cellSize, cellSize);
-                    obj.transform.position = transform.position + new Vector3(k * cellSize, j * cellSize, i * cellSize) - (meshSize/4);
+                    obj.transform.position = transform.position - new Vector3(k * cellSize - offset, j * cellSize - offset, i * cellSize - offset);
 
                 }
 
