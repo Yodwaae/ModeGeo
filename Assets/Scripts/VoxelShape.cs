@@ -98,6 +98,10 @@ public class VoxelShape : MonoBehaviour
                 SpawnMesh(parentNode);
                 return;
             }
+
+            if (parentNode.isEmpty){
+                return;
+            }
         }
 
         // Loop through all children
