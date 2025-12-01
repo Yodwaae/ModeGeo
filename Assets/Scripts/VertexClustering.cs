@@ -6,7 +6,7 @@ using UnityEngine;
 public class VertexClustering : MonoBehaviour
 {
 
-    public int gridSize;
+    private int gridSize;
     public float cellSize;
 
     private List<GameObject> cells = new List<GameObject>();
@@ -16,8 +16,20 @@ public class VertexClustering : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void RegenerateGrid()
     {
+
+        var meshFilter = GetComponent<MeshFilter>();
+        if (meshFilter == null)
+            return;
+
+        // Mesh infos
+        Mesh mesh = meshFilter.sharedMesh;
+        Vector3 meshSize = mesh.bounds.size;
+
+        gridSize = Mathf.CeilToInt(Mathf.Max(meshSize.x, meshSize.y, meshSize.z) / cellSize);
+
         // TODO Compute gridsize by dividing the mesh size by the cell size (start with the greatest between width, length, depth; then I'll do one for each)
         // TODO Base myself on the mesh centroid and go in both direction ?
+
 
         // Reset
         pendingRebuild = false;
@@ -40,8 +52,8 @@ public class VertexClustering : MonoBehaviour
 
                     // Transform
                     obj.transform.localScale = new Vector3(cellSize, cellSize, cellSize);
-                    obj.transform.position = transform.position + new Vector3(k * cellSize, j * cellSize, i * cellSize);
-                    
+                    obj.transform.position = transform.position + new Vector3(k * cellSize, j * cellSize, i * cellSize) - (meshSize/4);
+
                 }
 
             }
