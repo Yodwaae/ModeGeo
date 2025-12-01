@@ -6,11 +6,14 @@ using UnityEngine;
 public class VertexClustering : MonoBehaviour
 {
 
-    private int cellSize;
+    private float cellSize;
     public int cellNumber;
 
+    private Mesh mesh;
     private List<GameObject> cells = new List<GameObject>();
     private bool pendingRebuild;
+    private Dictionary<int, List<Vector3>> cellVertices = new Dictionary<int, List<Vector3>>();
+    private Dictionary<int, Vector3> cellAverage = new Dictionary<int, Vector3>();
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -22,15 +25,17 @@ public class VertexClustering : MonoBehaviour
             return;
 
         // Mesh infos
-        Mesh mesh = meshFilter.sharedMesh;
+        mesh = meshFilter.sharedMesh;
         Vector3 meshSize = mesh.bounds.size;
-        float cellSize = Mathf.Max(meshSize.x, meshSize.y, meshSize.z)/ cellNumber;
+        cellSize = Mathf.Max(meshSize.x, meshSize.y, meshSize.z)/ cellNumber;
         float offset = (cellNumber - 1) * cellSize / 2;
 
         // Reset
         pendingRebuild = false;
         foreach (GameObject cell in cells)
             DestroyImmediate(cell);
+
+        cells.Clear();
 
         // N3 complexity (kinda shit)
         for (int i = 0; i < cellNumber; i++) {
@@ -42,7 +47,7 @@ public class VertexClustering : MonoBehaviour
                     obj.transform.SetParent(transform, false);
                     cells.Add(obj);
 
-                    // Collider
+                    // Collider (use for visualisation)
                     BoxCollider collider = obj.AddComponent<BoxCollider>();
                     collider.isTrigger = true;
 
@@ -52,6 +57,75 @@ public class VertexClustering : MonoBehaviour
 
                 }
 
+            }
+        }
+
+        // Launch the Vertex average logic
+        GetVertexPerCell();
+        VertexAverage();
+        AverageDebugSphere();
+    }
+
+    private void GetVertexPerCell()
+    {
+        // Initialisation
+        Vector3[] vertices = mesh.vertices;
+        cellVertices.Clear();
+        float offset = (cellNumber - 1) * cellSize / 2; // TODO Make it member ?
+
+
+        // To world space // TODO Do I really need two loops ? couldn't I do that in the same loop
+        for (int i = 0; i < vertices.Length; i++)
+            vertices[i] = transform.TransformPoint(vertices[i]); // TODO Should I really modify the vertices directly ?
+
+        for (int i = 0; i < vertices.Length; i++) { 
+            Vector3 pos = vertices[i];
+
+            // Use vertex position to compute flatten index
+            Vector3 local = pos - transform.position + new Vector3(offset, offset, offset);
+            int xIndex = Mathf.Clamp((int)(local.x / cellSize), 0, cellNumber - 1);
+            int yIndex = Mathf.Clamp((int)(local.y / cellSize), 0, cellNumber - 1);
+            int zIndex = Mathf.Clamp((int)(local.z / cellSize), 0, cellNumber - 1);
+            int index = xIndex + (yIndex * cellNumber) + zIndex * (cellNumber * cellNumber);
+
+            // Store vertex
+            if (!cellVertices.ContainsKey(index))
+                cellVertices[index] = new List<Vector3>();
+
+            cellVertices[index].Add(pos);
+        }
+    }
+
+    private void VertexAverage()
+    {
+
+        foreach (var (key, vertices) in cellVertices) {
+         
+            // Early exit if no vertices in the cell
+            if (vertices.Count == 0)
+                continue;
+
+            // Compute average vertex
+            Vector3 sum = Vector3.zero;
+            foreach (Vector3 vec in vertices)
+                sum += vec;
+
+            cellAverage[key] = sum / vertices.Count;
+        }
+
+    }
+
+    private void AverageDebugSphere()
+    {
+        for (int i = 0; i < cells.Count; i++)
+        {
+            if (cellAverage.TryGetValue(i, out Vector3 avg))
+            {
+
+                GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                marker.transform.localScale = Vector3.one * 0.05f;
+                marker.transform.position = avg;
+                marker.transform.SetParent(cells[i].transform);
             }
         }
     }
