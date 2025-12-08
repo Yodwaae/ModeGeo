@@ -99,6 +99,8 @@ public class VertexClustering : MonoBehaviour
     private void VertexAverage()
     {
 
+        cellAverage.Clear();
+
         foreach (var (key, vertices) in cellVertices) {
          
             // Early exit if no vertices in the cell
